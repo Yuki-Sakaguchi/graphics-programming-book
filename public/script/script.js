@@ -31,6 +31,12 @@
     const ENEMY_MAX_COUNT = 10
 
     /**
+     * 敵キャラクターのショットの最大個数
+     * @type {Array<Shot>}
+     */
+    const ENEMY_SHOT_MAX_COUNT = 50
+
+    /**
      * Caanvas2D APIをラップしたユーティリティクラス
      * @type {Canvas2DUtility}
      */
@@ -49,10 +55,10 @@
     let ctx = null
 
     /**
-     * イメージのインスタンス
-     * @type {Image}
+     * シーンマネージャー
+     * @type {SceneManager}
      */
-    let image = null
+    let scene = null
 
     /**
      * 実行開始時のタイムスタンプ
@@ -73,22 +79,22 @@
     let shotArray = []
 
     /**
-     * 敵キャラクターのインスタンスを格納する配列
-     * @type {Array<Enemy>}
-     */
-    let enemyArray = []
-
-    /**
      * シングルショットのインスタンスを格納する配列
      * @type {Array<Shot>}
      */
     let singleShotArray = []
 
     /**
-     * シーンマネージャー
-     * @type {SceneManager}
+     * 敵キャラクターのインスタンスを格納する配列
+     * @type {Array<Enemy>}
      */
-    let scene = null
+    let enemyArray = []
+
+    /**
+     * 敵キャラクターのショットのインスタンスを格納する配列
+     * @type {Array<Shot>}
+     */
+    let enemyShotArray = []
     
     window.addEventListener('load', () => {
         util = new Canvas2DUtility(document.body.querySelector('#main_canvas'))
@@ -118,9 +124,15 @@
             CANVAS_HEIGHT - 100
         )
         
+        // 敵のキャラクターのショットを初期化
+        for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
+            enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png')
+        }
+
         // 敵キャラクターを初期化する
         for (let i = 0; i < ENEMY_MAX_COUNT; i++) {
             enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png')        
+            enemyArray[i].setShotArray(enemyShotArray)
         }
 
         // ショットを初期化する
@@ -136,20 +148,12 @@
      * リソースなどの読み込みが完了したら描画を開始する
      */
     function loadCheck () {
-        // 準備完了を示す真偽知
         let ready = true
-        // 自機が準備完了かどうか
         ready = ready && viper.ready
-        // ショットが準備完了しているかどうか
-        shotArray.map((v) => {
-            ready = ready && v.ready
-        })
-        singleShotArray.map((v) => {
-            ready = ready && v.ready
-        })
-        enemyArray.map((v) => {
-            ready = ready && v.ready
-        })
+        shotArray.map((v) => ready = ready && v.ready)
+        singleShotArray.map((v) => ready = ready && v.ready)
+        enemyArray.map((v) => ready = ready && v.ready)
+        enemyShotArray.map((v) => ready = ready && v.ready)
         if (ready) {
             eventSetting()
             sceneSetting()
@@ -172,18 +176,19 @@
         })
         scene.add('invade', (time) => {
             // シーンのフレームが0のとき以外は即座に終了する
-            if (scene.frame !== 0) {
-                return
-            }
-            // ライフが0の状態のキャラクターが見つかったら配置する
-            for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
-                if (enemyArray[i].life <= 0) {
-                    console.log('enemy')
-                    let e = enemyArray[i]
-                    e.set(CANVAS_WIDTH/ 2, -e.height)
-                    e.setVector(0.0, 1.0)
-                    break
+            if (scene.frame === 0) {
+                // ライフが0の状態のキャラクターが見つかったら配置する
+                for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
+                    if (enemyArray[i].life <= 0) {
+                        let e = enemyArray[i]
+                        e.set(CANVAS_WIDTH/ 2, -e.height)
+                        e.setVector(0.0, 1.0)
+                        break
+                    }
                 }
+            }
+            if (scene.frame === 100) {
+                scene.use('invade')
             }
         })
         scene.use('intro')
@@ -198,15 +203,10 @@
         let nowTime = Date.now() / 1000
         viper.update()
         scene.update()
-        shotArray.map((v) => {
-            v.update()
-        })
-        singleShotArray.map((v) => {
-            v.update()
-        })
-        enemyArray.map((v) => {
-            v.update()
-        })
+        shotArray.map((v) => v.update())
+        singleShotArray.map((v) => v.update())
+        enemyArray.map((v) => v.update())
+        enemyShotArray.map((v) => v.update())
         requestAnimationFrame(render)
     }
 

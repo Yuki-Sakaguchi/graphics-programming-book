@@ -24,7 +24,7 @@ class Position {
   }
 
   /**
-   * 
+   * 配置する
    * @param {number} x - 設定するx座標 
    * @param {number} y - 設定するy座標
    */
@@ -244,6 +244,7 @@ class Viper extends Character {
   /**
    * ショットを設定する 
    * @param {Array<Shot>} shotArray 
+   * @param {Array<Shot>} singleShotArray 
    */
   setShotArray (shotArray, singleShotArray) {
     this.shotArray = shotArray
@@ -363,6 +364,16 @@ class Shot extends Character {
   }
 
   /**
+   * ショットのスピードを設定する
+   * @param {number} speed - 設定するスピード
+   */
+  setSpeed (speed) {
+    if (speed != null && speed > 0) {
+      this.speed = speed
+    }
+  }
+
+  /**
    * キャラクターの状態を更新し描画を行う
    */
   update () {
@@ -389,28 +400,88 @@ class Enemy extends Character {
     super(ctx, x, y, w, h, 0, imagePath)
 
     /**
+     * 自身のタイプ
+     * @type {string}
+     */
+    this.type = 'default'
+
+    /**
+     * 自身のフレーム
+     * @type {number}
+     */
+    this.frame = 0
+
+    /**
      * @type {number}
      */
     this.speed = 3
+
+    /**
+     * 自身がもつショットインスタンスの配列
+     * @type {Array<Shot>}
+     */
+    this.shotArray = null
   }
 
-  set (x, y, life = 1) {
+  /**
+   * 配置する
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} life 
+   * @param {string} type 
+   */
+  set (x, y, life = 1, type = 'default') {
     this.position.set(x, y)
     this.life = life
+    this.type = type
+    this.frame = 0
   }
 
+  /**
+   * ショットを設定する 
+   * @param {Array<Shot>} shotArray 
+   */
+  setShotArray (shotArray) {
+    this.shotArray = shotArray
+  }
+  
+  /**
+   * 自身から指定された方向にショットを放つ
+   * @param {number} [x=0.0] - 進行方向ベクトルのX要素 
+   * @param {number} [y=1.0] - 進行方向ベクトルのY要素 
+   */
+  fire (x = 0.0, y = 1.0) {
+    for (let i = 0; i < this.shotArray.length; ++i) {
+      if (this.shotArray[i].life <= 0) {
+        this.shotArray[i].set(this.position.x, this.position.y)
+        this.shotArray[i].setSpeed(5.0)
+        this.shotArray[i].setVector(x, y)
+        break
+      }
+    }
+  }
+
+  /**
+   * 更新
+   */
   update () {
     if (this.life <= 0) {
       return
     }
-
-    if (this.position.y - this.height > this.ctx.canvas.height) {
-      this.life = 0
+    switch (this.type) {
+      case 'default':
+      default:
+        if (this.frame === 50) {
+          this.fire()
+        }
+        this.position.x += this.vector.x * this.speed
+        this.position.y += this.vector.y * this.speed
+        if (this.position.y - this.height > this.ctx.canvas.height) {
+          this.life = 0
+        }
+        break
     }
-
-    this.position.x += this.vector.x * this.speed
-    this.position.y += this.vector.y * this.speed
-
     this.draw()
+    ++this.frame
   }
 }
