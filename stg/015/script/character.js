@@ -652,51 +652,61 @@ class Explosion {
          * @type {CanvasRenderingContext2D}
          */
         this.ctx = ctx;
+
         /**
          * 爆発の生存状態を表すフラグ
          * @type {boolean}
          */
         this.life = false;
+
         /**
          * 爆発を fill する際の色
          * @type {string}
          */
         this.color = color;
+
         /**
          * 自身の座標
          * @type {Position}
          */
         this.position = null;
+        
         /**
          * 爆発の広がりの半径
          * @type {number}
          */
         this.radius = radius;
+        
         /**
          * 爆発の火花の数
          * @type {number}
          */
         this.count = count;
+        
         /**
          * 爆発が始まった瞬間のタイムスタンプ
          * @type {number}
          */
         this.startTime = 0;
+        
         /**
          * 爆発が消えるまでの時間
          * @type {number}
          */
         this.timeRange = timeRange;
+        
         /**
          * 火花のひとつあたりの大きさ（幅・高さ）
          * @type {number}
          */
         this.fireSize = size;
+        
         /**
          * 火花の位置を格納する
          * @type {Array<Position>}
          */
         this.firePosition = [];
+        
         /**
          * 火花の進行方向を格納する
          * @type {Array<Position>}

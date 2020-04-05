@@ -37,6 +37,12 @@
     const ENEMY_SHOT_MAX_COUNT = 50
 
     /**
+     * 爆発エフェクトの最大個数
+     * @type {number}
+     */
+    const EXPLOSION_MAX_COUNT = 10
+
+    /**
      * Caanvas2D APIをラップしたユーティリティクラス
      * @type {Canvas2DUtility}
      */
@@ -96,6 +102,15 @@
      */
     let enemyShotArray = []
     
+    /**
+     * 爆発エフェクトのインスタンスを格納する個数
+     * @type {Array<Explosion>}
+     */
+    let explosionArray = []
+
+    /**
+     * ページロード時の処理
+     */
     window.addEventListener('load', () => {
         util = new Canvas2DUtility(document.body.querySelector('#main_canvas'))
         canvas = util.canvas
@@ -110,8 +125,6 @@
     function initialize () {
         canvas.width = CANVAS_WIDTH
         canvas.height = CANVAS_HEIGHT
-        isComing = true
-        comingStart = Date.now()
 
         scene = new SceneManager()
 
@@ -123,6 +136,7 @@
             CANVAS_WIDTH / 2,
             CANVAS_HEIGHT - 100
         )
+        viper.setShotArray(shotArray, singleShotArray)
         
         // 敵のキャラクターのショットを初期化
         for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
@@ -130,18 +144,28 @@
         }
 
         // 敵キャラクターを初期化する
-        for (let i = 0; i < ENEMY_MAX_COUNT; i++) {
+        for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
             enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png')        
             enemyArray[i].setShotArray(enemyShotArray)
         }
 
+        // 爆発エフェクトを初期化する
+        for (let i = 0; i < EXPLOSION_MAX_COUNT; ++i) {
+            explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25)        
+        }
+        
         // ショットを初期化する
-        for (let i = 0; i < SHOT_MAX_COUNT; i++) {
+        for (let i = 0; i < SHOT_MAX_COUNT; ++i) {
             shotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/viper_shot.png')
             singleShotArray[i * 2] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png')
             singleShotArray[i * 2 + 1] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png')
+            shotArray[i].setTargets(enemyArray)
+            singleShotArray[i * 2].setTargets(enemyArray)
+            singleShotArray[i * 2 + 1].setTargets(enemyArray)
+            shotArray[i].setExplosions(explosionArray)
+            singleShotArray[i * 2].setExplosions(explosionArray)
+            singleShotArray[i * 2 + 1].setExplosions(explosionArray)
         }
-        viper.setShotArray(shotArray, singleShotArray)
     }
 
     /**
@@ -181,7 +205,7 @@
                 for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
                     if (enemyArray[i].life <= 0) {
                         let e = enemyArray[i]
-                        e.set(CANVAS_WIDTH/ 2, -e.height)
+                        e.set(CANVAS_WIDTH/ 2, -e.height, 2, 'default')
                         e.setVector(0.0, 1.0)
                         break
                     }
@@ -200,13 +224,14 @@
     function render () {
         ctx.globalAlpha = 1.0
         util.drawRect(0, 0, canvas.width, canvas.height, '#eeeeee')
-        let nowTime = Date.now() / 1000
-        viper.update()
+        let nowTime = (Date.now() - startTime) / 1000
         scene.update()
+        viper.update()
+        enemyArray.map((v) => v.update())
         shotArray.map((v) => v.update())
         singleShotArray.map((v) => v.update())
-        enemyArray.map((v) => v.update())
         enemyShotArray.map((v) => v.update())
+        explosionArray.map((v) => v.update())
         requestAnimationFrame(render)
     }
 

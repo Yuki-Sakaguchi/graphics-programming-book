@@ -125,11 +125,6 @@
         // シーンを初期化する
         scene = new SceneManager();
 
-        // 爆発エフェクトを初期化する
-        for(i = 0; i < EXPLOSION_MAX_COUNT; ++i){
-            explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25);
-        }
-
         // 自機のショットを初期化する
         for(i = 0; i < SHOT_MAX_COUNT; ++i){
             shotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/viper_shot.png');
@@ -159,6 +154,11 @@
             enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
             // 敵キャラクターはすべて同じショットを共有するのでここで与えておく
             enemyArray[i].setShotArray(enemyShotArray);
+        }
+        
+        // 爆発エフェクトを初期化する
+        for(i = 0; i < EXPLOSION_MAX_COUNT; ++i){
+            explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25);
         }
 
         // 衝突判定を行うために対象を設定する
