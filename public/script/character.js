@@ -44,6 +44,7 @@ class Position {
   }
 }
 
+
 /**
  * キャラクター管理のための基幹クラス
  */
@@ -169,6 +170,7 @@ class Character {
   }
 }
 
+
 /**
  * Viper クラス
  */
@@ -183,7 +185,7 @@ class Viper extends Character {
    * @param {Image} image 
    */
   constructor (ctx, x, y, w, h, imagePath) {
-    super(ctx, x, y, w, h, 0, imagePath)
+    super(ctx, x, y, w, h, 1, imagePath)
 
     /**
      * 自身の移動スピード
@@ -245,6 +247,7 @@ class Viper extends Character {
    */
   setComing (startX, startY, endX, endY) {
     this.isComing = true
+    this.life = 1
     this.comingTime = Date.now()
     this.position.set(startX, startY)
     this.comingStartPosition = new Position(startX, startY)
@@ -265,6 +268,8 @@ class Viper extends Character {
    * キャラクターの状態を更新し、描画すを行う処理
    */
   update () {
+    if (this.life <= 0) return
+
     let justTime = Date.now()
     
     // 登場完了していない場合は徐々にY座標を移動させる
@@ -341,6 +346,7 @@ class Viper extends Character {
     this.ctx.globalAlpha = 1.0
   }
 }
+
 
 /**
  * Shot クラス
@@ -455,6 +461,10 @@ class Shot extends Character {
       if (this.life <= 0 || v.life <= 0) return
       let dist = this.position.distance(v.position)
       if (dist <= (this.width + v.width) / 4) {
+        // 自キャラが対象の場合はisComingの場合は無効
+        if (v instanceof Viper) {
+          if (v.isComing) return
+        }
         v.life -= this.power
         if (v.life <= 0) {
           for (let i = 0; i < this.explosionArray.length; ++i) {
@@ -474,6 +484,9 @@ class Shot extends Character {
 }
 
 
+/**
+ * 敵クラス 
+ */        
 class Enemy extends Character {
   constructor (ctx, x, y, w, h, imagePath) {
     super(ctx, x, y, w, h, 0, imagePath)
@@ -566,6 +579,9 @@ class Enemy extends Character {
 }
 
 
+/**
+ * 爆発クラス
+ */
 class Explosion {
   /**
    * @param {CanvasRenderingContext2D} ctx 
@@ -615,11 +631,16 @@ class Explosion {
      * @type {number}
      */
     this.timeRange = timeRange
+    
+    /**
+     * @type {number} - 火花の1つ当たりの最大の大きさ（幅、高さ）
+     */
+    this.fireBaseSize = size
 
     /**
-     * @type {number}
+     * @type {Array<Position>} - 火花の1つ中の大きさを格納する
      */
-    this.fireSize = size
+    this.fireSize = []
 
     /**
      * @type {Array<Position>}
@@ -640,10 +661,12 @@ class Explosion {
   set (x, y) {
     for (let i = 0; i < this.count; ++i) {
       this.firePosition[i] = new Position(x, y)
-      let r = Math.random() * Math.PI * 2.0 // 0〜6.28（一周分の数値）
-      let s = Math.sin(r)
-      let c = Math.cos(r)
-      this.fireVector[i] = new Position(c, s)
+      let vr = Math.random() * Math.PI * 2.0 // 0〜6.28（一周分の数値）
+      let s = Math.sin(vr)
+      let c = Math.cos(vr)
+      let mr = Math.random()
+      this.fireVector[i] = new Position(c * mr, s * mr)
+      this.fireSize[i] = (Math.random() * 0.5 + 0.5) * this.fireBaseSize
     }
     this.life = true
     this.startTime = Date.now()
@@ -660,18 +683,20 @@ class Explosion {
     // 発生した時間との差分を取得
     let time = (Date.now() - this.startTime) / 1000
     // 爆発終了までの進捗
-    let progress = Math.min(time / this.timeRange, 1.0)
+    let ease = simpleEaseIn(1.0 - Math.min(time / this.timeRange, 1.0))
+    let progress = 1.0 - ease
 
     // 進捗に合わせて描画
     for (let i = 0; i < this.firePosition.length; ++i) {
       let d = this.radius * progress
       let x = this.firePosition[i].x + this.fireVector[i].x * d
       let y = this.firePosition[i].y + this.fireVector[i].y * d
+      let s = 1.0 - progress
       this.ctx.fillRect(
-        x - this.fireSize/2,
-        y - this.fireSize/2,
-        this.fireSize,
-        this.fireSize
+        x - (this.fireSize[i] * s)/2,
+        y - (this.fireSize[i] * s)/2,
+        this.fireSize[i] * s,
+        this.fireSize[i] * s
       )
     }
 
@@ -679,4 +704,8 @@ class Explosion {
       this.life = false
     }
   }
+}
+
+function simpleEaseIn (t) {
+  return t * t * t * t
 }

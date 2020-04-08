@@ -109,6 +109,12 @@
     let explosionArray = []
 
     /**
+     * 再スタートするためのフラグ 
+     * @type {boolean}
+     */
+    let restart = false
+
+    /**
      * ページロード時の処理
      */
     window.addEventListener('load', () => {
@@ -137,11 +143,6 @@
             CANVAS_HEIGHT - 100
         )
         viper.setShotArray(shotArray, singleShotArray)
-        
-        // 敵のキャラクターのショットを初期化
-        for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
-            enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png')
-        }
 
         // 敵キャラクターを初期化する
         for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
@@ -151,8 +152,15 @@
 
         // 爆発エフェクトを初期化する
         for (let i = 0; i < EXPLOSION_MAX_COUNT; ++i) {
-            explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25)        
+            explosionArray[i] = new Explosion(ctx, 100.0, 15, 40.0, 1.0)        
         }
+        
+        // 敵のキャラクターのショットを初期化
+        for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
+            enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png')
+            enemyShotArray[i].setTargets([viper])
+            enemyShotArray[i].setExplosions(explosionArray)
+        }       
         
         // ショットを初期化する
         for (let i = 0; i < SHOT_MAX_COUNT; ++i) {
@@ -206,13 +214,34 @@
                     if (enemyArray[i].life <= 0) {
                         let e = enemyArray[i]
                         e.set(CANVAS_WIDTH/ 2, -e.height, 2, 'default')
-                        e.setVector(0.0, 1.0)
+                        e.setVector(0.0, 1.0) 
                         break
                     }
                 }
             }
             if (scene.frame === 100) {
                 scene.use('invade')
+            }
+            if (viper.life <= 0) {
+                scene.use('gameover')
+            }
+        })
+        scene.add('gameover', (time) => {
+            let textWidth = CANVAS_WIDTH / 2
+            let loopWidth = CANVAS_WIDTH + textWidth
+            let x = CANVAS_WIDTH - (scene.frame * 2) % loopWidth
+            ctx.font = 'bold 72px sans-serif'
+            util.drawText('GAME OVER', x, CANVAS_HEIGHT/2, '#ff0000', textWidth)
+
+            if (restart) {
+                restart = false
+                viper.setComing(
+                    CANVAS_WIDTH / 2,
+                    CANVAS_HEIGHT,
+                    CANVAS_WIDTH / 2,
+                    CANVAS_HEIGHT - 100
+                )
+                scene.use('intro')
             }
         })
         scene.use('intro')
@@ -241,6 +270,12 @@
     function eventSetting () {
         window.addEventListener('keydown', (event) => {
            isKeyDown[`key_${event.key}`] = true 
+
+           if (event.key === 'Enter') {
+               if (viper.life === 0) {
+                   restart = true
+               }
+           }
         })
 
         window.addEventListener('keyup', (event) => {
