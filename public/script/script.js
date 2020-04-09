@@ -3,8 +3,17 @@
      * キーの押下状態を調べるためのオブジェクト
      * このオブジェクトはプロジェクトのどこからでも参照できるように
      * windowオブジェクトを拡張しています
+     * @global
+     * @type {Object}
      */
     window.isKeyDown = {}
+
+    /**
+     * スコアを格納する
+     * @global
+     * @type {number}
+     */
+    window.gameScore = 0
 
     /**
      * canvasの幅
@@ -235,6 +244,7 @@
 
             if (restart) {
                 restart = false
+                gameScore = 0
                 viper.setComing(
                     CANVAS_WIDTH / 2,
                     CANVAS_HEIGHT,
@@ -254,6 +264,12 @@
         ctx.globalAlpha = 1.0
         util.drawRect(0, 0, canvas.width, canvas.height, '#eeeeee')
         let nowTime = (Date.now() - startTime) / 1000
+
+        // ポイントを画面に描画
+        ctx.font = 'bold 24px monospace'
+        util.drawText(zeroPadding(gameScore, 5), 30, 50, '#111111')
+
+        // 各オブジェクトを更新
         scene.update()
         viper.update()
         enemyArray.map((v) => v.update())
@@ -261,6 +277,7 @@
         singleShotArray.map((v) => v.update())
         enemyShotArray.map((v) => v.update())
         explosionArray.map((v) => v.update())
+
         requestAnimationFrame(render)
     }
 
@@ -281,5 +298,16 @@
         window.addEventListener('keyup', (event) => {
            isKeyDown[`key_${event.key}`] = false 
         })
+    }
+
+    /**
+     * 数値の不足した桁数をゼロで埋める関数
+     * @param {number} number 
+     * @param {number} count 
+     */
+    function zeroPadding (number, count) {
+        let zeroArray = new Array(count)
+        let zeroString = zeroArray.join('0') + number
+        return zeroString.slice(-count)
     }
 })()

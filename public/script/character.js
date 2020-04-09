@@ -467,6 +467,9 @@ class Shot extends Character {
         }
         v.life -= this.power
         if (v.life <= 0) {
+          if (v instanceof Enemy) {
+            gameScore = Math.min(gameScore + 100, 99999)
+          }
           for (let i = 0; i < this.explosionArray.length; ++i) {
             if (!this.explosionArray[i].life) {
               this.explosionArray[i].set(v.position.x, v.position.y)
