@@ -46,6 +46,17 @@
     const ENEMY_SHOT_MAX_COUNT = 50
 
     /**
+     * 敵キャラクター(小)のインスタンス数
+     * @type {number}
+     */
+    const ENEMY_SMALL_MAX_COUNT = 20
+
+    /**
+     * 敵キャラクター(大)のインスタンス数
+     * @type {number}
+     */
+    const ENEMY_LARGE_MAX_COUNT = 5
+    /**
      * 爆発エフェクトの最大個数
      * @type {number}
      */
@@ -154,9 +165,16 @@
         viper.setShotArray(shotArray, singleShotArray)
 
         // 敵キャラクターを初期化する
-        for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
+        for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; ++i) {
             enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png')        
             enemyArray[i].setShotArray(enemyShotArray)
+            enemyArray[i].setAttackTarget(viper)
+        }
+
+        for (let i = 0; i < ENEMY_LARGE_MAX_COUNT; ++i) {
+            enemyArray[ENEMY_SMALL_MAX_COUNT + i] = new Enemy(ctx, 0, 0, 64, 64, './image/enemy_large.png')
+            enemyArray[ENEMY_SMALL_MAX_COUNT + i].setShotArray(enemyShotArray)
+            enemyArray[ENEMY_SMALL_MAX_COUNT + i].setAttackTarget(viper)
         }
 
         // 爆発エフェクトを初期化する
@@ -211,25 +229,81 @@
      */
     function sceneSetting () {
         scene.add('intro', (time) => {
-            if (time > 2.0) {
-                scene.use('invade')
+            if (time > 3.0) {
+                scene.use('invade_default_type')
             }
         })
-        scene.add('invade', (time) => {
-            // シーンのフレームが0のとき以外は即座に終了する
-            if (scene.frame === 0) {
+        scene.add('invade_default_type', (time) => {
+            // シーンのフレーム数が30で割り切れるときは敵キャラクターを配置する
+            if (scene.frame === 30) {
                 // ライフが0の状態のキャラクターが見つかったら配置する
-                for (let i = 0; i < ENEMY_MAX_COUNT; ++i) {
+                for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; ++i) {
                     if (enemyArray[i].life <= 0) {
                         let e = enemyArray[i]
-                        e.set(CANVAS_WIDTH/ 2, -e.height, 2, 'default')
-                        e.setVector(0.0, 1.0) 
+                        if (scene.frame % 60 === 0) {
+                            e.set(-e.width, 30, 2, 'default')
+                            e.setVectorFromAngle(degreesToRadians(30))
+                        } else {
+                            e.set(CANVAS_WIDTH + e.width, 30, 2, 'default')
+                            e.setVectorFromAngle(degreesToRadians(150))
+                        }
                         break
                     }
                 }
             }
+            if (scene.frame === 270) {
+                scene.use('blank')
+            }
+            if (viper.life <= 0) {
+                scene.use('gameover')
+            }
+        })
+        scene.add('blank', (time) => {
+            if (scene.frame === 150) {
+                scene.use('invade_wave_move_type')
+            }    
+            if (viper.life <= 0) {
+                scene.use('gameover')
+            }
+        })
+        scene.add('invade_wave_move_type', (time) => {
+            // シーンのフレームが0のとき以外は即座に終了する
+            if (scene.frame % 50 === 0) {
+                // ライフが0の状態のキャラクターが見つかったら配置する
+                for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; ++i) {
+                    if (enemyArray[i].life <= 0) {
+                        let e = enemyArray[i]
+                        if (scene.frame <= 200) {
+                            e.set(CANVAS_WIDTH * 0.2, -e.height, 2, 'wave')
+                        } else {
+                            e.set(CANVAS_WIDTH * 0.8, -e.height, 2, 'wave')
+                        }
+                        break
+                    }
+                }
+            }
+            if (scene.frame === 450) {
+                scene.use('invade_large_type')
+            }
+            if (viper.life <= 0) {
+                scene.use('gameover')
+            }
+        })
+        scene.add('invade_large_type', (time) => {
+            // シーンのフレームが0のとき以外は即座に終了する
             if (scene.frame === 100) {
-                scene.use('invade')
+                // ライフが0の状態のキャラクターが見つかったら配置する
+                let i = ENEMY_SMALL_MAX_COUNT + ENEMY_LARGE_MAX_COUNT
+                for (let j = ENEMY_SMALL_MAX_COUNT; j < i; ++j) {
+                    if (enemyArray[j].life <= 0) {
+                        let e = enemyArray[j]
+                        e.set(CANVAS_WIDTH / 2, -e.height, 50, 'large')
+                        break
+                    }
+                }
+            }
+            if (scene.frame === 500) {
+                scene.use('intro')
             }
             if (viper.life <= 0) {
                 scene.use('gameover')
@@ -298,6 +372,23 @@
         window.addEventListener('keyup', (event) => {
            isKeyDown[`key_${event.key}`] = false 
         })
+    }
+
+    /**
+     * 度数法の角度からラジアンを生成する
+     * @param {number} degrees 
+     */
+    function degreesToRadians (degrees) {
+        return degrees * Math.PI / 180
+    }
+
+    /**
+     * 特定の範囲におけるランダムな整数の値を生成する
+     * @param {number} range - 乱数を生成する範囲（0以上〜range未満） 
+     */
+    function gererateRandomInt (range) {
+        let random = Math.random()
+        return Math.floor(random * range)
     }
 
     /**
