@@ -72,7 +72,7 @@
      * 背景を流れる星の最大速度
      * @type {number}
      */
-    const BACKGROUND_STAR_MAX_SPEED =4 
+    const BACKGROUND_STAR_MAX_SPEED = 4 
     
     /**
      * Caanvas2D APIをラップしたユーティリティクラス
