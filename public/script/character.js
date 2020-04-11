@@ -21,7 +21,7 @@ class Position {
     let len = Position.calcLength(x, y)
     return new Position(x / len, y / len)
   }
-  
+
   /**
    * @constractor 
    * @param {number} x - x座標 
