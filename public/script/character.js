@@ -729,6 +729,11 @@ class Explosion {
      * @type {Array<Position>}
      */
     this.fireVector = []
+
+    /**
+     * @type {Sound}
+     */
+    this.sound = null
   }
 
   /**
@@ -748,6 +753,18 @@ class Explosion {
     }
     this.life = true
     this.startTime = Date.now()
+
+    if (this.sound) {
+      this.sound.play()
+    }
+  }
+
+  /**
+   * 効果音を設定
+   * @param {Sound} sound 
+   */
+  setSound (sound) {
+    this.sound = sound
   }
 
   /**
@@ -784,6 +801,10 @@ class Explosion {
   }
 }
 
+
+/**
+ * 背景の星クラス
+ */
 class BackgroundStar {
   /**
    * @constructor

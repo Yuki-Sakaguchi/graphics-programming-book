@@ -153,23 +153,39 @@
     let restart = false
 
     /**
+     * 効果音再生のためのSoundクラスのインスタンス
+     * @type {Sound}
+     */
+    let sound = null
+
+    /**
      * ページロード時の処理
      */
     window.addEventListener('load', () => {
         util = new Canvas2DUtility(document.body.querySelector('#main_canvas'))
         canvas = util.canvas
         ctx = util.context
-        initialize()
-        loadCheck()
+        canvas.width = CANVAS_WIDTH
+        canvas.height = CANVAS_HEIGHT
+        let button = document.body.querySelector('#start_button')
+        button.addEventListener('click', () => {
+            button.disabled = true
+            sound = new Sound()
+            sound.load('./sound/explosion.mp3', (error) => {
+                if (error) {
+                    alert('ファイルの読み込みエラーです')
+                    return
+                }
+                initialize()
+                loadCheck()
+            })
+        })
     })
 
     /**
      * 初期化
      */
     function initialize () {
-        canvas.width = CANVAS_WIDTH
-        canvas.height = CANVAS_HEIGHT
-
         scene = new SceneManager()
 
         // 自機の初期化
@@ -198,6 +214,7 @@
         // 爆発エフェクトを初期化する
         for (let i = 0; i < EXPLOSION_MAX_COUNT; ++i) {
             explosionArray[i] = new Explosion(ctx, 100.0, 15, 40.0, 1.0)        
+            explosionArray[i].setSound(sound)
         }
         
         // 敵のキャラクターのショットを初期化
