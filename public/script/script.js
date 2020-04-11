@@ -40,6 +40,12 @@
     const ENEMY_SHOT_MAX_COUNT = 50
 
     /**
+     * ボスキャラクターのホーミングショットの最大個数
+     * @type {number}
+     */
+    const HOMING_MAX_COUNT = 50
+
+    /**
      * 敵キャラクター(小)のインスタンス数
      * @type {number}
      */
@@ -50,6 +56,7 @@
      * @type {number}
      */
     const ENEMY_LARGE_MAX_COUNT = 5
+
     /**
      * 爆発エフェクトの最大個数
      * @type {number}
@@ -111,6 +118,12 @@
     let viper = null
 
     /**
+     * ボスキャラクター
+     * @type {Boss}
+     */
+    let boss = null
+
+    /**
      * ショットのインスタンスを格納する配列
      * @type {Array<Shot>}
      */
@@ -134,6 +147,12 @@
      */
     let enemyShotArray = []
     
+    /**
+     * ボスキャラクターのホーミングショットのインスタンスを格納する配列
+     * @type {Array<Homing>}
+     */
+    let homingArray = []
+
     /**
      * 爆発エフェクトのインスタンスを格納する配列
      * @type {Array<Explosion>}
@@ -223,15 +242,29 @@
             enemyShotArray[i].setTargets([viper])
             enemyShotArray[i].setExplosions(explosionArray)
         }       
+
+        // ホーミングショットの初期化
+        for (let i = 0; i < HOMING_MAX_COUNT; ++i) {
+            homingArray[i] = new Homing(ctx, 0, 0, 32, 32, './image/homing_shot.png')
+            homingArray[i].setTargets([viper])
+            homingArray[i].setExplosions(explosionArray)
+        }
+
+        // ボスの初期化 
+        boss = new Boss(ctx, 0, 0, 128, 128, './image/boss.png')
+        boss.setShotArray(enemyShotArray)
+        boss.setHomingArray(homingArray)
+        boss.setAttackTarget(viper)
         
         // ショットを初期化する
+        let contactEnemyArray = enemyArray.concat([boss])
         for (let i = 0; i < SHOT_MAX_COUNT; ++i) {
             shotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/viper_shot.png')
             singleShotArray[i * 2] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png')
             singleShotArray[i * 2 + 1] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png')
-            shotArray[i].setTargets(enemyArray)
-            singleShotArray[i * 2].setTargets(enemyArray)
-            singleShotArray[i * 2 + 1].setTargets(enemyArray)
+            shotArray[i].setTargets(contactEnemyArray)
+            singleShotArray[i * 2].setTargets(contactEnemyArray)
+            singleShotArray[i * 2 + 1].setTargets(contactEnemyArray)
             shotArray[i].setExplosions(explosionArray)
             singleShotArray[i * 2].setExplosions(explosionArray)
             singleShotArray[i * 2 + 1].setExplosions(explosionArray)
@@ -256,6 +289,7 @@
         ready = ready && viper.ready
         shotArray.map((v) => ready = ready && v.ready)
         singleShotArray.map((v) => ready = ready && v.ready)
+        homingArray.map((v) => ready = ready && v.ready)
         enemyArray.map((v) => ready = ready && v.ready)
         enemyShotArray.map((v) => ready = ready && v.ready)
         if (ready) {
@@ -348,10 +382,23 @@
                 }
             }
             if (scene.frame === 500) {
-                scene.use('intro')
+                scene.use('invade_boss')
             }
             if (viper.life <= 0) {
                 scene.use('gameover')
+            }
+        })
+        scene.add('invade_boss', (time) => {
+            if (scene.frame === 0) {
+                boss.set(CANVAS_WIDTH / 2, -boss.height, 250)
+                boss.setMode('invade')
+            }
+            if (viper.life <= 0) {
+                scene.use('gameover')
+                boss.setMode('escape')
+            }
+            if (boss.life <= 0) {
+                scene.use('intro')
             }
         })
         scene.add('gameover', (time) => {
@@ -392,10 +439,12 @@
         scene.update()
         backgroundStarArray.map((v) => v.update())
         viper.update()
+        boss.update()
         enemyArray.map((v) => v.update())
         shotArray.map((v) => v.update())
         singleShotArray.map((v) => v.update())
         enemyShotArray.map((v) => v.update())
+        homingArray.map((v) => v.update())
         explosionArray.map((v) => v.update())
 
         requestAnimationFrame(render)
