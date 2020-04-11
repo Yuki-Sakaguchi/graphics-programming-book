@@ -784,6 +784,68 @@ class Explosion {
   }
 }
 
+class BackgroundStar {
+  /**
+   * @constructor
+   * @param {CanvasRenderingContext2D} ctx 
+   * @param {number} size 
+   * @param {number} speed 
+   * @param {string} color 
+   */
+  constructor (ctx, size, speed, color = '#ffffff') {
+    /**
+     * @type {CanvasRenderingContext2D}
+     */
+    this.ctx = ctx
+
+    /**
+     * @type {number}
+     */
+    this.size = size
+
+    /**
+     * @type {number}
+     */
+    this.speed = speed
+
+    /**
+     * @type {string}
+     */
+    this.color = color
+
+    /**
+     * @type {Position}
+     */
+    this.position = null
+  }
+
+  /**
+   * 位置を設定する
+   * @param {number} x 
+   * @param {number} y 
+   */
+  set (x, y) {
+    this.position = new Position(x, y)
+  }
+
+  /**
+   * 更新
+   */
+  update () {
+    this.ctx.fillStyle = this.color
+    this.position.y += this.speed
+    this.ctx.fillRect(
+      this.position.x - this.size / 2,
+      this.position.y - this.size / 2,
+      this.size,
+      this.size
+    )
+    if (this.position.y + this.size > this.ctx.canvas.height) {
+      this.position.y = -this.size
+    }
+  }
+}
+
 function simpleEaseIn (t) {
   return t * t * t * t
 }

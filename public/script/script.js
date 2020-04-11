@@ -34,12 +34,6 @@
     const SHOT_MAX_COUNT = 10
 
     /**
-     * 的キャラクターのインスタンス数
-     * @type {number}
-     */
-    const ENEMY_MAX_COUNT = 10
-
-    /**
      * 敵キャラクターのショットの最大個数
      * @type {Array<Shot>}
      */
@@ -62,6 +56,24 @@
      */
     const EXPLOSION_MAX_COUNT = 10
 
+    /**
+     * 背景を流れる星の個数
+     * @type {number}
+     */
+    const BACKGROUND_STAR_MAX_COUNT = 100
+
+    /**
+     * 背景を流れる星の最大サイズ
+     * @type {number}
+     */
+    const BACKGROUND_STAR_MAX_SIZE = 3
+
+    /**
+     * 背景を流れる星の最大速度
+     * @type {number}
+     */
+    const BACKGROUND_STAR_MAX_SPEED =4 
+    
     /**
      * Caanvas2D APIをラップしたユーティリティクラス
      * @type {Canvas2DUtility}
@@ -123,10 +135,16 @@
     let enemyShotArray = []
     
     /**
-     * 爆発エフェクトのインスタンスを格納する個数
+     * 爆発エフェクトのインスタンスを格納する配列
      * @type {Array<Explosion>}
      */
     let explosionArray = []
+
+    /**
+     * 流れる星のインスタンスを格納する配列
+     * @type {Array<BackgroundStar>}
+     */
+    let backgroundStarArray = []
 
     /**
      * 再スタートするためのフラグ 
@@ -200,6 +218,16 @@
             shotArray[i].setExplosions(explosionArray)
             singleShotArray[i * 2].setExplosions(explosionArray)
             singleShotArray[i * 2 + 1].setExplosions(explosionArray)
+        }
+
+        // 背景の星を初期化
+        for (let i = 0; i < BACKGROUND_STAR_MAX_COUNT; ++i) {
+            let size = 1 + Math.random() * (BACKGROUND_STAR_MAX_SIZE - 1)
+            let speed = 1 + Math.random() * (BACKGROUND_STAR_MAX_SPEED - 1)
+            backgroundStarArray[i] = new BackgroundStar(ctx, size, speed)
+            let x = Math.random() * CANVAS_WIDTH
+            let y = Math.random() * CANVAS_HEIGHT
+            backgroundStarArray[i].set(x, y)            
         }
     }
 
@@ -314,7 +342,7 @@
             let loopWidth = CANVAS_WIDTH + textWidth
             let x = CANVAS_WIDTH - (scene.frame * 2) % loopWidth
             ctx.font = 'bold 72px sans-serif'
-            util.drawText('GAME OVER', x, CANVAS_HEIGHT/2, '#ff0000', textWidth)
+            util.drawText('GAME OVER', x, CANVAS_HEIGHT/2, '#ffff00', textWidth)
 
             if (restart) {
                 restart = false
@@ -336,15 +364,16 @@
      */
     function render () {
         ctx.globalAlpha = 1.0
-        util.drawRect(0, 0, canvas.width, canvas.height, '#eeeeee')
+        util.drawRect(0, 0, canvas.width, canvas.height, '#111122')
         let nowTime = (Date.now() - startTime) / 1000
 
         // ポイントを画面に描画
         ctx.font = 'bold 24px monospace'
-        util.drawText(zeroPadding(gameScore, 5), 30, 50, '#111111')
+        util.drawText(zeroPadding(gameScore, 5), 30, 50, '#ffffff')
 
         // 各オブジェクトを更新
         scene.update()
+        backgroundStarArray.map((v) => v.update())
         viper.update()
         enemyArray.map((v) => v.update())
         shotArray.map((v) => v.update())
